@@ -374,7 +374,7 @@ class VisualBotCore:
         now = time.time()
         interval = float(self.config.get("focus_log_interval_seconds", 30))
         if now - self.last_crash_warning_at >= interval:
-            self.log.warning("Ventana de crash detectada: '%s'. Bot en pausa.", crash[1])
+            self.log.warning("Crash window detected: '%s'. Bot paused.", crash[1])
             self.last_crash_warning_at = now
         return True
 
@@ -410,13 +410,13 @@ class VisualBotCore:
 
         if not title:
             if self.window_was_found.get(hwnd, False):
-                self.log.warning("Ventana perdida (hwnd=%d).", hwnd)
+                self.log.warning("Window lost (hwnd=%d).", hwnd)
                 self.window_was_found[hwnd] = False
             self.focus_failed_until[hwnd] = now + backoff
             return False
 
         if not self.window_was_found.get(hwnd, False):
-            self.log.info("Ventana detectada: '%s' (hwnd=%d).", title, hwnd)
+            self.log.info("Window detected: '%s' (hwnd=%d).", title, hwnd)
             self.window_was_found[hwnd] = True
 
         if win32gui.GetForegroundWindow() == hwnd:
@@ -427,7 +427,7 @@ class VisualBotCore:
             time.sleep(0.5)
         except Exception as exc:
             if now - self.last_focus_warning_at.get(hwnd, 0.0) >= log_interval:
-                self.log.warning("No pude traer ventana al frente (hwnd=%d): %s", hwnd, exc)
+                self.log.warning("Could not bring window to front (hwnd=%d): %s", hwnd, exc)
                 self.last_focus_warning_at[hwnd] = now
             self.focus_failed_until[hwnd] = now + backoff
             return False
@@ -440,8 +440,8 @@ class VisualBotCore:
         if not skip_focus_check and win32gui.GetForegroundWindow() != hwnd:
             if now - self.last_focus_warning_at.get(hwnd, 0.0) >= log_interval:
                 self.log.warning(
-                    "Ventana (hwnd=%d) no quedó en primer plano (foreground=%d). "
-                    "Si el juego está en pantalla completa, activa 'Ignorar verificación de foco'.",
+                    "Window (hwnd=%d) did not stay in foreground (foreground=%d). "
+                    "If the game is fullscreen, enable 'Ignore focus check'.",
                     hwnd, win32gui.GetForegroundWindow(),
                 )
                 self.last_focus_warning_at[hwnd] = now
@@ -506,8 +506,8 @@ class VisualBotCore:
                 interval = float(self.config.get("focus_log_interval_seconds", 30))
                 if now - self.last_capture_warning_at >= interval:
                     self.log.warning(
-                        "La captura de la ventana (hwnd=%d) no parece correcta. "
-                        "Si usas escritorios virtuales, mantén la ventana en el escritorio activo.",
+                        "Window capture (hwnd=%d) does not look correct. "
+                        "If using virtual desktops, keep the window on the active desktop.",
                         hwnd,
                     )
                     self.last_capture_warning_at = now
@@ -610,7 +610,7 @@ class VisualBotCore:
                 warn_key = f"{key}/{name}"
                 interval = float(self.config.get("focus_log_interval_seconds", 30))
                 if now - self.last_locate_warning_at.get(warn_key, 0.0) >= interval:
-                    self.log.warning("Error buscando imagen %s: %s", warn_key, exc)
+                    self.log.warning("Error searching image %s: %s", warn_key, exc)
                     self.last_locate_warning_at[warn_key] = now
 
         fallback = button_cfg.get("color_fallback")
@@ -701,7 +701,7 @@ class VisualBotCore:
         if key != "vote_start" and self.vote_start_cooldown_active(hwnd):
             now = time.time()
             if now - self.last_vote_cooldown_log_at >= 20:
-                self.log.info("Click %s bloqueado: vote_start en cooldown.", key)
+                self.log.info("Click %s blocked: vote_start on cooldown.", key)
                 self.last_vote_cooldown_log_at = now
             return False
 
@@ -751,20 +751,20 @@ class VisualBotCore:
         if not self.click_button(key, hwnd):
             return False
 
-        self.log.info("Esperando a que '%s' desaparezca...", key)
+        self.log.info("Waiting for '%s' to disappear...", key)
         deadline = time.time() + timeout
         next_retry_at = time.time() + retry_interval
         while time.time() < deadline and not stop_event.is_set():
             time.sleep(1)
             if not self.locate_button(key, use_fallback=False, hwnd=hwnd):
-                self.log.info("'%s' desaparecio.", key)
+                self.log.info("'%s' disappeared.", key)
                 return True
             if retry_while_visible and time.time() >= next_retry_at:
-                self.log.info("'%s' sigue visible; reintentando click.", key)
+                self.log.info("'%s' still visible; retrying click.", key)
                 self.click_button(key, hwnd)
                 next_retry_at = time.time() + retry_interval
 
-        self.log.warning("'%s' sigue visible tras %ss.", key, timeout)
+        self.log.warning("'%s' still visible after %ss.", key, timeout)
         return False
 
     def test_detection(self) -> list[tuple[str, bool, int | None]]:
@@ -787,7 +787,7 @@ class VisualBotCore:
             if stop_event.is_set():
                 return False
             if not self.is_visible(key, hwnd):
-                self.log.info("'%s' desaparecio antes del click; cancelado.", key)
+                self.log.info("'%s' disappeared before click; cancelled.", key)
                 rt.first_seen_at = None
                 rt.clicked_until_gone = False
                 return False
@@ -830,7 +830,7 @@ class VisualBotCore:
                 rt.effective_delay = delay + jitter
                 win_label = f"hwnd={hwnd}" if hwnd else "pantalla"
                 self.log.info(
-                    "%s visible [%s]. Esperando %.1fs antes de pulsar (base=%.0fs jitter=+%.1fs).",
+                    "%s visible [%s]. Waiting %.1fs before click (base=%.0fs jitter=+%.1fs).",
                     key, win_label, rt.effective_delay, delay, jitter,
                 )
                 if not self.wait_visible_delay(key, rt, stop_event, hwnd):
@@ -856,7 +856,7 @@ class VisualBotCore:
         interval = float(self.config.get("interval_seconds", 5))
         self.window_runtime.clear()
         self.force_left_up()
-        self.log.info("Bot activo.")
+        self.log.info("Bot running.")
 
         while not stop_event.is_set():
             if self.crash_dialog_visible():
@@ -874,8 +874,8 @@ class VisualBotCore:
                     log_interval = float(self.config.get("focus_log_interval_seconds", 30))
                     if now - self.last_no_window_warning_at >= log_interval:
                         self.log.warning(
-                            "No se encontraron ventanas con título: %s. "
-                            "Usa 'Listar ventanas' para ver los títulos exactos.",
+                            "No windows found with title: %s. "
+                            "Use 'List windows' to see exact titles.",
                             ", ".join(f"'{t}'" for t in title_parts),
                         )
                         self.last_no_window_warning_at = now
@@ -896,7 +896,7 @@ class VisualBotCore:
             stop_event.wait(interval)
 
         self.force_left_up()
-        self.log.info("Bot parado.")
+        self.log.info("Bot stopped.")
 
 
 class Bot2App(tk.Tk):
@@ -928,7 +928,7 @@ class Bot2App(tk.Tk):
 
         self.vars: dict[str, tk.Variable] = {}
         self.button_vars: dict[str, tk.BooleanVar] = {}
-        self.status_var = tk.StringVar(value="Bot parado")
+        self.status_var = tk.StringVar(value="Bot stopped")
 
         self.create_widgets()
         self.load_config_to_ui()
@@ -983,16 +983,16 @@ class Bot2App(tk.Tk):
         for idx in range(4):
             controls.columnconfigure(idx, weight=1)
 
-        ttk.Button(controls, text="Iniciar", command=self.start_bot, style="Accent.TButton").grid(row=0, column=0, padx=4, pady=(0, 4), sticky="ew")
-        ttk.Button(controls, text="Parar", command=self.stop_bot).grid(row=0, column=1, padx=4, pady=(0, 4), sticky="ew")
-        ttk.Button(controls, text="Probar deteccion", command=self.test_detection).grid(row=0, column=2, padx=4, pady=(0, 4), sticky="ew")
-        ttk.Button(controls, text="Guardar config", command=self.save_ui_config).grid(row=0, column=3, padx=4, pady=(0, 4), sticky="ew")
-        ttk.Button(controls, text="Abrir imagenes", command=lambda: os.startfile(IMG_DIR)).grid(row=1, column=0, padx=4, pady=(4, 0), sticky="ew")
-        ttk.Button(controls, text="Capturar region", command=self.capture_region_dialog).grid(row=1, column=1, padx=4, pady=(4, 0), sticky="ew")
-        ttk.Button(controls, text="Añadir boton", command=self.add_button_dialog).grid(row=1, column=2, padx=4, pady=(4, 0), sticky="ew")
-        ttk.Button(controls, text="Listar ventanas", command=self.list_windows_to_log).grid(row=1, column=3, padx=4, pady=(4, 0), sticky="ew")
+        ttk.Button(controls, text="Start", command=self.start_bot, style="Accent.TButton").grid(row=0, column=0, padx=4, pady=(0, 4), sticky="ew")
+        ttk.Button(controls, text="Stop", command=self.stop_bot).grid(row=0, column=1, padx=4, pady=(0, 4), sticky="ew")
+        ttk.Button(controls, text="Test detection", command=self.test_detection).grid(row=0, column=2, padx=4, pady=(0, 4), sticky="ew")
+        ttk.Button(controls, text="Save config", command=self.save_ui_config).grid(row=0, column=3, padx=4, pady=(0, 4), sticky="ew")
+        ttk.Button(controls, text="Open images", command=lambda: os.startfile(IMG_DIR)).grid(row=1, column=0, padx=4, pady=(4, 0), sticky="ew")
+        ttk.Button(controls, text="Capture region", command=self.capture_region_dialog).grid(row=1, column=1, padx=4, pady=(4, 0), sticky="ew")
+        ttk.Button(controls, text="Add button", command=self.add_button_dialog).grid(row=1, column=2, padx=4, pady=(4, 0), sticky="ew")
+        ttk.Button(controls, text="List windows", command=self.list_windows_to_log).grid(row=1, column=3, padx=4, pady=(4, 0), sticky="ew")
 
-        settings = ttk.LabelFrame(main, text="Ajustes", padding=10)
+        settings = ttk.LabelFrame(main, text="Settings", padding=10)
         settings.grid(row=2, column=0, sticky="nsew", padx=(0, 6), pady=8)
         settings.columnconfigure(1, weight=1)
 
@@ -1008,23 +1008,23 @@ class Bot2App(tk.Tk):
         self.vars["dev_mode"] = tk.BooleanVar()
 
         rows = [
-            ("Ventana(s)  [coma=varias, vacío=pantalla completa]", "window_title"),
-            ("Intervalo checks", "interval_seconds"),
-            ("Confianza imagen", "confidence"),
-            ("Tiempo click", "click_hold_seconds"),
-            ("Reintento click", "click_retry_interval_seconds"),
+            ("Window(s)  [comma=multiple, empty=fullscreen]", "window_title"),
+            ("Check interval", "interval_seconds"),
+            ("Image confidence", "confidence"),
+            ("Click duration", "click_hold_seconds"),
+            ("Click retry", "click_retry_interval_seconds"),
         ]
         for row, (label, key) in enumerate(rows):
             ttk.Label(settings, text=label).grid(row=row, column=0, sticky="w", pady=3)
             ttk.Entry(settings, textvariable=self.vars[key]).grid(row=row, column=1, sticky="ew", pady=3)
 
-        ttk.Checkbutton(settings, text="Traer ventana al frente antes de pulsar (normalmente no hace falta)", variable=self.vars["focus_window"]).grid(row=5, column=0, columnspan=2, sticky="w", pady=3)
-        ttk.Checkbutton(settings, text="Mover cursor tras click", variable=self.vars["move_away_after_click"]).grid(row=6, column=0, columnspan=2, sticky="w", pady=3)
-        ttk.Checkbutton(settings, text="Solo ventanas visibles (desactivar si fullscreen)", variable=self.vars["require_window_visible"]).grid(row=7, column=0, columnspan=2, sticky="w", pady=3)
-        ttk.Checkbutton(settings, text="Ignorar verificacion de foco (fullscreen exclusivo)", variable=self.vars["skip_focus_check"]).grid(row=8, column=0, columnspan=2, sticky="w", pady=3)
-        ttk.Checkbutton(settings, text="Modo dev (log detallado)", variable=self.vars["dev_mode"]).grid(row=9, column=0, columnspan=2, sticky="w", pady=3)
+        ttk.Checkbutton(settings, text="Bring window to front before clicking (usually not needed)", variable=self.vars["focus_window"]).grid(row=5, column=0, columnspan=2, sticky="w", pady=3)
+        ttk.Checkbutton(settings, text="Move cursor after click", variable=self.vars["move_away_after_click"]).grid(row=6, column=0, columnspan=2, sticky="w", pady=3)
+        ttk.Checkbutton(settings, text="Only visible windows (disable if fullscreen)", variable=self.vars["require_window_visible"]).grid(row=7, column=0, columnspan=2, sticky="w", pady=3)
+        ttk.Checkbutton(settings, text="Ignore focus check (exclusive fullscreen)", variable=self.vars["skip_focus_check"]).grid(row=8, column=0, columnspan=2, sticky="w", pady=3)
+        ttk.Checkbutton(settings, text="Dev mode (detailed log)", variable=self.vars["dev_mode"]).grid(row=9, column=0, columnspan=2, sticky="w", pady=3)
 
-        buttons = ttk.LabelFrame(main, text="Botones vigilados", padding=10)
+        buttons = ttk.LabelFrame(main, text="Watched buttons", padding=10)
         buttons.grid(row=2, column=1, sticky="nsew", padx=(6, 0), pady=8)
         buttons.columnconfigure(0, weight=0)
         buttons.columnconfigure(1, weight=1)
@@ -1072,7 +1072,7 @@ class Bot2App(tk.Tk):
 
         _hf = ("Segoe UI", 9, "bold")
         ttk.Label(self.buttons_frame, text="A", font=_hf).grid(row=0, column=0, sticky="w", padx=(2, 4))
-        ttk.Label(self.buttons_frame, text="Boton", font=_hf).grid(row=0, column=1, sticky="w")
+        ttk.Label(self.buttons_frame, text="Button", font=_hf).grid(row=0, column=1, sticky="w")
         ttk.Label(self.buttons_frame, text="Delay", font=_hf).grid(row=0, column=2, sticky="w", padx=(6, 0))
         ttk.Label(self.buttons_frame, text="Imgs", font=_hf).grid(row=0, column=3, sticky="w", padx=(6, 0))
         ttk.Separator(self.buttons_frame, orient="horizontal").grid(row=1, column=0, columnspan=5, sticky="ew", pady=(2, 4))
@@ -1090,7 +1090,7 @@ class Bot2App(tk.Tk):
             ttk.Entry(self.buttons_frame, textvariable=delay_var, width=8).grid(row=row, column=2, sticky="w", pady=3)
             image_count = len(cfg.get("images", []))
             ttk.Label(self.buttons_frame, text=str(image_count)).grid(row=row, column=3, sticky="w", pady=3)
-            ttk.Button(self.buttons_frame, text="Quitar", command=lambda item=key: self.remove_button(item)).grid(row=row, column=4, sticky="e", pady=3)
+            ttk.Button(self.buttons_frame, text="Remove", command=lambda item=key: self.remove_button(item)).grid(row=row, column=4, sticky="e", pady=3)
 
     def collect_ui_config(self) -> dict:
         data = merge_defaults(self.config_data, DEFAULT_CONFIG)
@@ -1119,26 +1119,26 @@ class Bot2App(tk.Tk):
             self.config_data = self.collect_ui_config()
             save_json(CONFIG_FILE, self.config_data)
             self.core.update_config(self.config_data)
-            self.logger.info("Config guardada: %s", CONFIG_FILE)
+            self.logger.info("Config saved: %s", CONFIG_FILE)
         except Exception as exc:
-            messagebox.showerror("Config", f"No se pudo guardar la config:\n{exc}")
+            messagebox.showerror("Config", f"Could not save config:\n{exc}")
 
     def start_bot(self) -> None:
         if self.state.running:
-            self.logger.info("El bot ya esta activo.")
+            self.logger.info("Bot is already running.")
             return
         self.save_ui_config()
         self.state.stop_event.clear()
         self.state.worker = threading.Thread(target=self.worker_entry, name="bot2-worker", daemon=True)
         self.state.running = True
-        self.set_status("Bot activo")
+        self.set_status("Bot running")
         self.state.worker.start()
 
     def set_status(self, value: str) -> None:
         lower = value.lower()
-        if "activo" in lower:
+        if "running" in lower:
             color = "#4ade80"
-        elif "parando" in lower or "probando" in lower:
+        elif "stopping" in lower or "testing" in lower:
             color = "#fbbf24"
         else:
             color = "#f87171"
@@ -1159,40 +1159,40 @@ class Bot2App(tk.Tk):
             self.logger.exception("Error en bot: %s", exc)
         finally:
             self.state.running = False
-            self.set_status("Bot parado")
+            self.set_status("Bot stopped")
 
     def list_windows_to_log(self) -> None:
         windows = self.core.list_windows()
-        self.logger.info("=== Ventanas visibles (%d) ===", len(windows))
+        self.logger.info("=== Visible windows (%d) ===", len(windows))
         for hwnd, title in windows:
             self.logger.info("  [%d] %s", hwnd, title)
-        self.logger.info("=== Fin lista. Copia el título (o parte) en el campo Ventana(s) ===")
+        self.logger.info("=== End of list. Copy the title (or part) into the Window(s) field ===")
 
     def stop_bot(self) -> None:
         if not self.state.running:
-            self.set_status("Bot parado")
+            self.set_status("Bot stopped")
             return
         self.state.stop_event.set()
-        self.set_status("Parando...")
+        self.set_status("Stopping...")
 
     def test_detection(self) -> None:
         self.save_ui_config()
 
         def run() -> None:
-            self.set_status("Probando deteccion...")
+            self.set_status("Testing detection...")
             try:
                 results = self.core.test_detection()
                 for key, found, hwnd in results:
-                    win_label = f"hwnd={hwnd}" if hwnd else "pantalla completa"
-                    self.logger.info("Deteccion %s [%s]: %s", key, win_label, "VISIBLE" if found else "no")
+                    win_label = f"hwnd={hwnd}" if hwnd else "fullscreen"
+                    self.logger.info("Detection %s [%s]: %s", key, win_label, "VISIBLE" if found else "not found")
             finally:
-                self.set_status("Bot activo" if self.state.running else "Bot parado")
+                self.set_status("Bot running" if self.state.running else "Bot stopped")
 
         threading.Thread(target=run, daemon=True).start()
 
     def add_button_dialog(self) -> None:
         top = tk.Toplevel(self)
-        top.title("Añadir boton")
+        top.title("Add button")
         top.geometry("560x300")
         top.transient(self)
         top.grab_set()
@@ -1208,12 +1208,12 @@ class Bot2App(tk.Tk):
         def choose_image() -> None:
             selected = filedialog.askopenfilename(
                 parent=top,
-                title="Elegir imagen del boton",
+                title="Choose button image",
                 filetypes=[
-                    ("Imagenes", "*.png *.jpg *.jpeg *.bmp"),
+                    ("Images", "*.png *.jpg *.jpeg *.bmp"),
                     ("PNG", "*.png"),
                     ("JPG", "*.jpg *.jpeg"),
-                    ("Todos", "*.*"),
+                    ("All files", "*.*"),
                 ],
             )
             if selected:
@@ -1226,10 +1226,10 @@ class Bot2App(tk.Tk):
                 raw_name = name_var.get().strip()
                 image_path = Path(image_var.get().strip())
                 if not raw_name:
-                    messagebox.showwarning("Añadir boton", "Pon un nombre para el boton.", parent=top)
+                    messagebox.showwarning("Add button", "Enter a name for the button.", parent=top)
                     return
                 if not image_path.exists() or not image_path.is_file():
-                    messagebox.showwarning("Añadir boton", "Elige una imagen valida.", parent=top)
+                    messagebox.showwarning("Add button", "Choose a valid image.", parent=top)
                     return
 
                 key = sanitize_name(raw_name)
@@ -1263,59 +1263,59 @@ class Bot2App(tk.Tk):
                 save_json(CONFIG_FILE, self.config_data)
                 self.core.update_config(self.config_data)
                 self.render_button_config()
-                self.logger.info("Boton añadido: %s -> %s", key, target.name)
+                self.logger.info("Button added: %s -> %s", key, target.name)
                 top.destroy()
             except Exception as exc:
-                messagebox.showerror("Añadir boton", f"No se pudo añadir:\n{exc}", parent=top)
+                messagebox.showerror("Add button", f"Could not add:\n{exc}", parent=top)
 
-        ttk.Label(top, text="Nombre").grid(row=0, column=0, sticky="w", padx=12, pady=(14, 4))
+        ttk.Label(top, text="Name").grid(row=0, column=0, sticky="w", padx=12, pady=(14, 4))
         ttk.Entry(top, textvariable=name_var).grid(row=0, column=1, sticky="ew", padx=12, pady=(14, 4))
 
-        ttk.Label(top, text="Imagen").grid(row=1, column=0, sticky="w", padx=12, pady=4)
+        ttk.Label(top, text="Image").grid(row=1, column=0, sticky="w", padx=12, pady=4)
         ttk.Entry(top, textvariable=image_var).grid(row=1, column=1, sticky="ew", padx=(12, 4), pady=4)
-        ttk.Button(top, text="Elegir...", command=choose_image).grid(row=1, column=2, sticky="ew", padx=(4, 12), pady=4)
+        ttk.Button(top, text="Choose...", command=choose_image).grid(row=1, column=2, sticky="ew", padx=(4, 12), pady=4)
 
-        ttk.Label(top, text="Delay antes de pulsar").grid(row=2, column=0, sticky="w", padx=12, pady=4)
+        ttk.Label(top, text="Delay before click").grid(row=2, column=0, sticky="w", padx=12, pady=4)
         ttk.Entry(top, textvariable=delay_var, width=10).grid(row=2, column=1, sticky="w", padx=12, pady=4)
 
-        ttk.Label(top, text="Esperar desaparicion").grid(row=3, column=0, sticky="w", padx=12, pady=4)
+        ttk.Label(top, text="Wait for disappear").grid(row=3, column=0, sticky="w", padx=12, pady=4)
         ttk.Entry(top, textvariable=wait_var, width=10).grid(row=3, column=1, sticky="w", padx=12, pady=4)
 
-        ttk.Checkbutton(top, text="Activo", variable=enabled_var).grid(row=4, column=1, sticky="w", padx=12, pady=4)
-        ttk.Checkbutton(top, text="Reintentar mientras siga visible", variable=retry_var).grid(row=5, column=1, sticky="w", padx=12, pady=4)
+        ttk.Checkbutton(top, text="Active", variable=enabled_var).grid(row=4, column=1, sticky="w", padx=12, pady=4)
+        ttk.Checkbutton(top, text="Retry while still visible", variable=retry_var).grid(row=5, column=1, sticky="w", padx=12, pady=4)
 
         actions = ttk.Frame(top)
         actions.grid(row=6, column=0, columnspan=3, sticky="e", padx=12, pady=(16, 12))
-        ttk.Button(actions, text="Cancelar", command=top.destroy).pack(side=tk.RIGHT, padx=4)
-        ttk.Button(actions, text="Añadir", command=add_button).pack(side=tk.RIGHT, padx=4)
+        ttk.Button(actions, text="Cancel", command=top.destroy).pack(side=tk.RIGHT, padx=4)
+        ttk.Button(actions, text="Add", command=add_button).pack(side=tk.RIGHT, padx=4)
 
     def remove_button(self, key: str) -> None:
         if key in DEFAULT_CONFIG.get("buttons", {}):
-            if not messagebox.askyesno("Quitar boton", f"{key} es un boton base. ¿Desactivarlo en vez de borrarlo?"):
+            if not messagebox.askyesno("Remove button", f"{key} is a built-in button. Disable it instead of deleting?"):
                 return
             if key in self.button_vars:
                 self.button_vars[key].set(False)
             self.save_ui_config()
             return
 
-        if not messagebox.askyesno("Quitar boton", f"¿Quitar '{key}' de la configuracion?"):
+        if not messagebox.askyesno("Remove button", f"Remove '{key}' from configuration?"):
             return
         self.config_data = self.collect_ui_config()
         self.config_data.get("buttons", {}).pop(key, None)
         save_json(CONFIG_FILE, self.config_data)
         self.core.update_config(self.config_data)
         self.render_button_config()
-        self.logger.info("Boton quitado: %s", key)
+        self.logger.info("Button removed: %s", key)
 
     def capture_region_dialog(self) -> None:
         top = tk.Toplevel(self)
-        top.title("Capturar region")
+        top.title("Capture region")
         top.geometry("420x180")
         top.transient(self)
         top.grab_set()
 
         name_var = tk.StringVar(value="return_lobby")
-        ttk.Label(top, text="Nombre del boton/imagen:").pack(anchor="w", padx=12, pady=(12, 4))
+        ttk.Label(top, text="Button / image name:").pack(anchor="w", padx=12, pady=(12, 4))
 
         existing = list(self.config_data.get("buttons", {}).keys())
         combo = ttk.Combobox(top, textvariable=name_var, values=existing)
@@ -1323,22 +1323,22 @@ class Bot2App(tk.Tk):
 
         ttk.Label(
             top,
-            text="Al pulsar 'Seleccionar': el panel se minimiza,\n"
-                 "arrastra un rectangulo sobre el boton en la ventana\n"
-                 "y suelta. La imagen se guarda automaticamente.",
+            text="Click 'Select region': the panel minimizes,\n"
+                 "drag a rectangle over the button in the game window\n"
+                 "and release. The image is saved automatically.",
             justify="left",
         ).pack(anchor="w", padx=12, pady=8)
 
         def do_select() -> None:
             name = name_var.get().strip().replace(" ", "_")
             if not name:
-                messagebox.showwarning("Capturar region", "Escribe un nombre.", parent=top)
+                messagebox.showwarning("Capture region", "Enter a name.", parent=top)
                 return
             top.destroy()
             self.iconify()
             self.after(300, lambda: self._open_region_selector(name))
 
-        ttk.Button(top, text="Seleccionar region", command=do_select).pack(pady=4)
+        ttk.Button(top, text="Select region", command=do_select).pack(pady=4)
 
     def _open_region_selector(self, button_name: str) -> None:
         import PIL.ImageTk as ImageTk
@@ -1362,7 +1362,7 @@ class Bot2App(tk.Tk):
 
         hint = canvas.create_text(
             sw // 2, 28,
-            text=f"Arrastra el rectangulo sobre el boton  '{button_name}'  —  ESC para cancelar",
+            text=f"Draw rectangle over button  '{button_name}'  —  ESC to cancel",
             fill="white", font=("Segoe UI", 13, "bold"),
         )
 
@@ -1388,7 +1388,7 @@ class Bot2App(tk.Tk):
             x0, x1 = sorted([x0, x1])
             y0, y1 = sorted([y0, y1])
             if x1 - x0 < 5 or y1 - y0 < 5:
-                self.logger.warning("Region demasiado pequeña, cancelado.")
+                self.logger.warning("Region too small, cancelled.")
                 return
             cropped = screenshot.crop((x0, y0, x1, y1))
             IMG_DIR.mkdir(parents=True, exist_ok=True)
@@ -1411,7 +1411,7 @@ class Bot2App(tk.Tk):
             save_json(CONFIG_FILE, self.config_data)
             self.core.update_config(self.config_data)
             self.render_button_config()
-            self.logger.info("Imagen guardada: %s (%dx%d px)", path, x1 - x0, y1 - y0)
+            self.logger.info("Image saved: %s (%dx%d px)", path, x1 - x0, y1 - y0)
             try:
                 os.startfile(path)
             except OSError:
@@ -1420,7 +1420,7 @@ class Bot2App(tk.Tk):
         def on_escape(_e: tk.Event) -> None:
             overlay.destroy()
             self.deiconify()
-            self.logger.info("Captura cancelada.")
+            self.logger.info("Capture cancelled.")
 
         canvas.bind("<ButtonPress-1>", on_press)
         canvas.bind("<B1-Motion>", on_drag)
@@ -1449,7 +1449,7 @@ class Bot2App(tk.Tk):
 
     def on_close(self) -> None:
         if self.state.running:
-            if not messagebox.askyesno("Salir", "El bot esta activo. ¿Pararlo y cerrar?"):
+            if not messagebox.askyesno("Exit", "Bot is running. Stop it and close?"):
                 return
             self.stop_bot()
             time.sleep(0.3)
