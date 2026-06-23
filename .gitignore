@@ -1,0 +1,19 @@
+# Build output
+build/
+dist/
+new/
+*.spec.bak
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Lock file (se crea en runtime)
+bot2_visual.lock
+
+# Logs (se generan en runtime)
+logs/
+
+# Config local (opcional: descomenta si no quieres subir tu config)
+# config.json

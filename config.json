@@ -1,0 +1,72 @@
+{
+  "window_title": "Automobilista 2",
+  "interval_seconds": 5.0,
+  "confidence": 0.8,
+  "focus_window": true,
+  "focus_each_loop": false,
+  "require_focus_before_click": false,
+  "require_window_visible": true,
+  "skip_focus_check": true,
+  "dev_mode": true,
+  "validate_ams2_capture": true,
+  "focus_backoff_seconds": 10,
+  "focus_log_interval_seconds": 30,
+  "crash_window_titles": [
+    "Crash Report",
+    "BugSplat"
+  ],
+  "move_away_after_click": true,
+  "click_hold_seconds": 0.06,
+  "click_retry_interval_seconds": 1.0,
+  "default_wait_gone_timeout": 60,
+  "buttons": {
+    "vote_start": {
+      "enabled": true,
+      "images": [
+        "vote_start.png"
+      ],
+      "block_images": [
+        "cancelar.png",
+        "cancelar_rojo.png"
+      ],
+      "color_fallback": "red_top_right",
+      "appear_delay_seconds": 15.0,
+      "appear_delay_jitter_seconds": 5,
+      "wait_gone_timeout_seconds": 60,
+      "retry_while_visible": true,
+      "post_click_cooldown_seconds": 10
+    },
+    "next": {
+      "enabled": true,
+      "images": [
+        "next.png"
+      ],
+      "appear_delay_seconds": 3.0,
+      "appear_delay_jitter_seconds": 3,
+      "wait_gone_timeout_seconds": 60,
+      "retry_while_visible": true
+    },
+    "return_lobby": {
+      "enabled": true,
+      "images": [
+        "return_lobby.png",
+        "return_lobby2.png",
+        "return_lobby_2.png"
+      ],
+      "appear_delay_seconds": 8.0,
+      "appear_delay_jitter_seconds": 4,
+      "wait_gone_timeout_seconds": 60,
+      "retry_while_visible": true
+    },
+    "ready": {
+      "enabled": false,
+      "images": [
+        "ready.png"
+      ],
+      "appear_delay_seconds": 3.0,
+      "appear_delay_jitter_seconds": 2,
+      "wait_gone_timeout_seconds": 30,
+      "retry_while_visible": true
+    }
+  }
+}
